@@ -31,8 +31,8 @@ fun MainScreen(
         is PostUiState.Loading -> {
             CircularProgressIndicator()
         }
-        is PostUiState.Success<*> -> {
-            PostListScreen(post.data as List<Post>)
+        is PostUiState.Success -> {
+            PostListScreen(post.data)
         }
     }
 }
