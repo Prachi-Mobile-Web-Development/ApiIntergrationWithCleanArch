@@ -3,6 +3,7 @@ package com.example.apiintergrationwithcleanarch.presentation.screens
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,6 +17,9 @@ fun MainScreen(
     viewModel: PostViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.postUiState.collectAsStateWithLifecycle(PostUiState.Loading)
+    LaunchedEffect(Unit) {
+        viewModel.fetchPosts()
+    }
     when(val post=uiState) {
         is PostUiState.Empty -> {
             Text("No Data")

@@ -29,7 +29,7 @@ import org.junit.runners.Parameterized
 class PostViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val postUseCase: PostUseCase = mockk()
-    private lateinit var classToTest: PostViewModel
+    private lateinit var postViewModel: PostViewModel
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
@@ -48,32 +48,11 @@ class PostViewModelTest {
     @Parameters(method = "getAllParameters")
     fun `Given UseCase response when collecting postUiState then verify state`(
         isSuccess: Boolean,
-        input: List<Post>
     ) {
         runTest {
             //Given
-            coEvery { postUseCase() } returns flowOf(input)
-            classToTest = PostViewModel(postUseCase)
-            //When
-            classToTest.postUiState.test {
-                //Then
-                assertTrue(awaitItem() is PostUiState.Loading)
-                val result = awaitItem()
-                if (isSuccess) {
-                    assertTrue(result is PostUiState.Success)
-                    assertEquals(input, (result as PostUiState.Success).data)
-                } else {
-                    assertTrue(result is PostUiState.Empty)
-                }
-                cancelAndIgnoreRemainingEvents()
-            }
-            coVerify(exactly = 1) { postUseCase() }
-        }
-    }
 
-    fun getAllParameters() = arrayOf(
-        arrayOf(
-            true, listOf(
+           val post = listOf(
                 Post(
                     1,
                     1,
@@ -81,8 +60,35 @@ class PostViewModelTest {
                     "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto"
                 )
             )
-        ),
-        arrayOf(false, emptyList<Post>())
+
+            val exception= RuntimeException("Something went wrong")
+
+            coEvery { postUseCase() } returns if(isSuccess)
+             {Result.success(post)
+            }
+            else{
+                Result.failure(exception)
+            }
+            postViewModel = PostViewModel(postUseCase)
+            //When
+             postViewModel.fetchPosts()
+            //Then
+            val state = postViewModel.postUiState.value
+            if(isSuccess){
+                assertTrue( state is PostUiState.Success)
+                assertEquals(post,(state as PostUiState.Success).data)
+            }
+            else{
+                assertTrue(state is PostUiState.Error)
+                assertEquals(exception,(state as PostUiState.Error).throwable)
+            }
+            coVerify(exactly = 1) { postUseCase() }
+        }
+    }
+
+    fun getAllParameters() = arrayOf(
+        arrayOf(true),
+        arrayOf(false)
     )
 
 }
